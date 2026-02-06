@@ -93,10 +93,11 @@ export class ClawdVaultClient {
       params?: Record<string, any>;
       body?: any;
       auth?: boolean;
+      authAction?: string;  // Action name for wallet signature (e.g., 'session', 'chat')
       formData?: FormData;
     } = {}
   ): Promise<T> {
-    const { params, body, auth, formData } = options;
+    const { params, body, auth, authAction, formData } = options;
     
     let url = `${this.baseUrl}${path}`;
     if (params) {
@@ -116,8 +117,8 @@ export class ClawdVaultClient {
     if (auth) {
       if (this.sessionToken) {
         headers['Authorization'] = `Bearer ${this.sessionToken}`;
-      } else if (this.signer && body) {
-        const { signature, wallet } = await createAuthSignature(this.signer, body);
+      } else if (this.signer && authAction && body) {
+        const { signature, wallet } = await createAuthSignature(this.signer, authAction, body);
         headers['X-Wallet'] = wallet;
         headers['X-Signature'] = signature;
       }
@@ -562,7 +563,12 @@ export class ClawdVaultClient {
    * Create session token
    */
   async createSession(): Promise<SessionResponse> {
-    return this.request('POST', '/auth/session', { body: {}, auth: true });
+    const sessionData = { action: 'create_session' };
+    return this.request('POST', '/auth/session', { 
+      body: sessionData, 
+      auth: true, 
+      authAction: 'session' 
+    });
   }
 
   /**

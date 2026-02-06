@@ -28,9 +28,15 @@ program.addCommand(walletCommand);
 program.addCommand(streamCommand);
 program.addCommand(chatCommand);
 
-// Global error handling
+// Global setup - check environment before any command
 program.hook('preAction', () => {
-  // Can add global setup here
+  // Warn if using production API
+  const apiUrl = process.env.CLAWDVAULT_API_URL;
+  if (apiUrl?.includes('clawdvault.com') || apiUrl?.includes('mainnet')) {
+    console.warn(chalk.yellow('⚠️  WARNING: Using PRODUCTION API (clawdvault.com)'));
+    console.warn(chalk.gray('   Set CLAWDVAULT_API_URL=http://localhost:3000/api for local development'));
+    console.warn();
+  }
 });
 
 program.configureOutput({

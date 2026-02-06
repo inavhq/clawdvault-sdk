@@ -171,13 +171,25 @@ export async function signAndSerialize(
 }
 
 /**
+ * Create the signable message format that matches the server
+ * Uses a timestamp window to prevent replay attacks
+ */
+export function createSignableMessage(action: string, data: Record<string, unknown>): string {
+  const timestamp = Math.floor(Date.now() / 1000);
+  // Round to 5-minute windows to allow for clock skew
+  const window = Math.floor(timestamp / 300) * 300;
+  return `ClawdVault:${action}:${window}:${JSON.stringify(data)}`;
+}
+
+/**
  * Create signature for authenticated API requests
  */
 export async function createAuthSignature(
   signer: WalletSigner,
-  payload: object
+  action: string,
+  data: Record<string, unknown>
 ): Promise<{ signature: string; wallet: string }> {
-  const message = JSON.stringify(payload);
+  const message = createSignableMessage(action, data);
   const messageBytes = new TextEncoder().encode(message);
   const signatureBytes = await signer.signMessage(messageBytes);
   

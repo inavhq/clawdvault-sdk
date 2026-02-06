@@ -5,8 +5,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import Table from 'cli-table3';
-import { createClient } from '@clawdvault/sdk';
-import { spinner, formatSol, formatTokens, shortenAddress, handleError } from '../utils';
+import { spinner, formatSol, formatTokens, shortenAddress, handleError, createClientWithWallet } from '../utils';
 
 export const tokensCommand = new Command('tokens')
   .description('List tokens');
@@ -24,7 +23,7 @@ tokensCommand
     const spin = spinner('Fetching tokens...').start();
     
     try {
-      const client = createClient();
+      const { client } = createClientWithWallet();
       
       let graduated: boolean | undefined;
       if (options.graduated) graduated = true;

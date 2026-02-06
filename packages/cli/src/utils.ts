@@ -141,9 +141,21 @@ export function loadSigner(walletPathOrKey?: string): KeypairSigner | null {
 
 /**
  * Get API base URL from environment or default
+ * Development builds default to localhost
  */
-function getBaseUrl(): string | undefined {
-  return process.env.CLAWDVAULT_API_URL;
+function getBaseUrl(): string {
+  // Allow explicit override via environment
+  if (process.env.CLAWDVAULT_API_URL) {
+    const url = process.env.CLAWDVAULT_API_URL;
+    // Warn if using production
+    if (url.includes('clawdvault.com') || url.includes('mainnet')) {
+      console.warn(chalk.yellow('⚠️  WARNING: Using production API'));
+    }
+    return url;
+  }
+  
+  // Default to localhost for development
+  return 'http://localhost:3000/api';
 }
 
 /**
