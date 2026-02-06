@@ -27,7 +27,7 @@
     "@solana/spl-token": "^0.4.0",
     "@solana/web3.js": "^1.91.0",
     "bs58": "^6.0.0",
-    "eventsource": "^2.0.2",
+    "eventsource": "^4.1.0",
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
