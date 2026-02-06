@@ -76,7 +76,22 @@ streamCommand
       }
     });
     
+    // Track seen trade IDs to avoid duplicates
+    const seenTrades = new Set<string>();
+    
     conn.on<StreamTrade>('trade', (trade) => {
+      // Skip duplicates
+      if (seenTrades.has(trade.id)) {
+        return;
+      }
+      seenTrades.add(trade.id);
+      
+      // Limit set size
+      if (seenTrades.size > 1000) {
+        const first = seenTrades.values().next().value;
+        if (first) seenTrades.delete(first);
+      }
+      
       if (options.json) {
         // JSON mode: one line per trade
         console.log(JSON.stringify(trade));
@@ -307,7 +322,22 @@ streamCommand
       warn('Disconnected - reconnecting...');
     });
     
+    // Track seen message IDs to avoid duplicates (serverless can create multiple subscriptions)
+    const seenMessages = new Set<string>();
+    
     conn.on<StreamChatMessage>('message', (msg) => {
+      // Skip duplicates
+      if (seenMessages.has(msg.id)) {
+        return;
+      }
+      seenMessages.add(msg.id);
+      
+      // Limit set size to prevent memory leak
+      if (seenMessages.size > 1000) {
+        const first = seenMessages.values().next().value;
+        if (first) seenMessages.delete(first);
+      }
+      
       if (options.json) {
         console.log(JSON.stringify(msg));
         return;
