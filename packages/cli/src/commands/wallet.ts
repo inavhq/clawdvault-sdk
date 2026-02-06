@@ -88,37 +88,64 @@ walletCommand
   .description('Generate a new wallet')
   .option('-o, --output <path>', 'Output file path (default: ~/.clawdvault/wallet.json)')
   .option('--force', 'Overwrite existing wallet')
+  .option('--mnemonic', 'Generate wallet with recoverable seed phrase (can import into Phantom)')
   .action(async (options) => {
     try {
       const configDir = getConfigDir();
       const outputPath = options.output || path.join(configDir, 'wallet.json');
-      
+
       // Check if wallet exists
       if (fs.existsSync(outputPath) && !options.force) {
         warn(`Wallet already exists at ${outputPath}`);
         info('Use --force to overwrite');
         return;
       }
-      
+
       // Create config dir if needed
       if (!fs.existsSync(configDir)) {
         fs.mkdirSync(configDir, { recursive: true });
       }
-      
-      // Generate keypair
-      const keypair = Keypair.generate();
-      const secretKey = Array.from(keypair.secretKey);
-      
+
+      let keypair: Keypair;
+      let mnemonic: string | undefined;
+
+      if (options.mnemonic) {
+        // Generate wallet from mnemonic (BIP39)
+        const bip39 = await import('bip39');
+        mnemonic = bip39.generateMnemonic(256); // 24 words for better security
+        const seed = await bip39.mnemonicToSeed(mnemonic);
+
+        // Use first 32 bytes of seed as secret key
+        const secretKey = seed.slice(0, 32);
+        keypair = Keypair.fromSeed(new Uint8Array(secretKey));
+      } else {
+        // Generate random keypair
+        keypair = Keypair.generate();
+      }
+
+      const secretKeyArray = Array.from(keypair.secretKey);
+
       // Save wallet
-      fs.writeFileSync(outputPath, JSON.stringify(secretKey));
+      fs.writeFileSync(outputPath, JSON.stringify(secretKeyArray));
       fs.chmodSync(outputPath, 0o600); // Secure permissions
-      
+
       success('Wallet created successfully!');
       console.log();
       info(`Address: ${keypair.publicKey.toBase58()}`);
       info(`Saved to: ${outputPath}`);
-      console.log();
-      warn('⚠️  IMPORTANT: Back up your wallet file! Loss of this file means loss of funds.');
+
+      if (mnemonic) {
+        console.log();
+        console.log(chalk.yellow('📝 SEED PHRASE (Write this down!):'));
+        console.log(chalk.white(mnemonic));
+        console.log();
+        warn('⚠️  IMPORTANT: This seed phrase can recover your wallet in Phantom!');
+        warn('   Write it down and store it safely. Anyone with this phrase can steal your funds!');
+      } else {
+        console.log();
+        warn('⚠️  IMPORTANT: Back up your wallet file! Loss of this file means loss of funds.');
+        info('   Use --mnemonic if you want a recoverable seed phrase for Phantom import.');
+      }
       console.log();
     } catch (err) {
       handleError(err);
