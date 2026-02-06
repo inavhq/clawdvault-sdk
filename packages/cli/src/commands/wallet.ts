@@ -158,7 +158,7 @@ walletCommand
       table.push(
         { [chalk.cyan('Wallet')]: result.wallet },
         { [chalk.cyan('Token')]: result.mint },
-        { [chalk.cyan('Balance')]: formatTokens(result.balance) },
+        { [chalk.cyan('Balance')]: formatTokens(result.balance ?? 0) },
       );
       
       console.log(table.toString());
@@ -256,7 +256,7 @@ walletCommand
         return;
       }
       
-      console.log(chalk.bold(`\n💲 SOL Price: $${result.price.toFixed(2)}\n`));
+      console.log(chalk.bold(`\n💲 SOL Price: $${(result.price ?? 0).toFixed(2)}\n`));
       
       if (result.cached) {
         info(`Cached ${result.age}s ago from ${result.source}`);
@@ -304,7 +304,7 @@ walletCommand
       let usdValue = 0;
       try {
         const priceData = await client.getSolPrice();
-        solPrice = priceData.price;
+        solPrice = priceData.price ?? 0;
         usdValue = balanceSol * solPrice;
       } catch {
         // Price fetch failed, continue without USD value

@@ -44,7 +44,7 @@ tokensCommand
         return;
       }
       
-      console.log(chalk.bold(`\n📊 Tokens (Page ${result.page}, ${result.tokens.length} of ${result.total})\n`));
+      console.log(chalk.bold(`\n📊 Tokens (Page ${result.page}, ${result.tokens?.length ?? 0} of ${result.total ?? 0})\n`));
       
       const table = new Table({
         head: [
@@ -59,19 +59,19 @@ tokensCommand
         style: { head: [], border: [] },
       });
       
-      for (const token of result.tokens) {
-        const status = token.graduated 
+      for (const token of result.tokens ?? []) {
+        const status = token.graduated
           ? chalk.green('🎓 Graduated')
           : chalk.yellow('📈 Bonding');
-          
+
         table.push([
-          chalk.bold(token.symbol),
-          token.name,
-          formatSol(token.price_sol),
-          formatSol(token.market_cap_sol),
+          chalk.bold(token.symbol ?? '???'),
+          token.name ?? 'Unknown',
+          formatSol(token.price_sol ?? 0),
+          formatSol(token.market_cap_sol ?? 0),
           token.volume_24h ? formatSol(token.volume_24h) : '-',
           status,
-          shortenAddress(token.mint),
+          shortenAddress(token.mint ?? ''),
         ]);
       }
       

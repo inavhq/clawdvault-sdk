@@ -173,7 +173,7 @@ streamCommand
     let solPrice = 0;
     try {
       const { price } = await client.getSolPrice();
-      solPrice = price;
+      solPrice = price ?? 0;
     } catch {
       // Continue without USD prices
     }
@@ -242,8 +242,8 @@ streamCommand
     conn.on<StreamTokenUpdate>('update', displayUpdate);
     
     // Trade notifications
-    conn.on<{ type: string; price_sol: number; sol_amount: number }>('trade', (trade) => {
-      if (lastUpdate) {
+    conn.on<{ type: string; price_sol?: number; sol_amount?: number }>('trade', (trade) => {
+      if (lastUpdate && trade.price_sol !== undefined) {
         lastUpdate.price_sol = trade.price_sol;
         displayUpdate(lastUpdate);
       }

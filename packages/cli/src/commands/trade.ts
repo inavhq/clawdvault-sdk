@@ -62,12 +62,14 @@ tradeCommand
         style: { head: [], border: [] },
       });
       
+      const priceImpact = quote.price_impact ?? 0;
+      
       table.push(
         { [chalk.cyan('Input')]: `${solAmount} SOL` },
-        { [chalk.cyan('Output')]: `~${formatTokens(quote.output)} tokens` },
-        { [chalk.cyan('Price')]: formatSol(quote.current_price) },
-        { [chalk.cyan('Fee')]: formatSol(quote.fee) },
-        { [chalk.cyan('Price Impact')]: formatPercent(quote.price_impact) },
+        { [chalk.cyan('Output')]: `~${formatTokens(quote.output ?? 0)} tokens` },
+        { [chalk.cyan('Price')]: formatSol(quote.current_price ?? 0) },
+        { [chalk.cyan('Fee')]: formatSol(quote.fee ?? 0) },
+        { [chalk.cyan('Price Impact')]: formatPercent(priceImpact) },
         { [chalk.cyan('Slippage')]: `${(slippage * 100).toFixed(1)}%` },
       );
       
@@ -79,8 +81,8 @@ tradeCommand
       }
       
       // Check for high price impact
-      if (quote.price_impact > 0.05) {
-        warn(`High price impact: ${(quote.price_impact * 100).toFixed(2)}%`);
+      if (priceImpact > 0.05) {
+        warn(`High price impact: ${(priceImpact * 100).toFixed(2)}%`);
       }
       
       console.log();
@@ -102,10 +104,10 @@ tradeCommand
       success('Trade executed successfully!');
       console.log();
       info(`Signature: ${result.signature}`);
-      info(`SOL spent: ${formatSol(result.trade.solAmount)}`);
-      info(`Tokens received: ${formatTokens(result.trade.tokenAmount)}`);
+      info(`SOL spent: ${formatSol(result.trade?.solAmount ?? 0)}`);
+      info(`Tokens received: ${formatTokens(result.trade?.tokenAmount ?? 0)}`);
       console.log();
-      info(`Explorer: ${link(result.explorer)}`);
+      info(`Explorer: ${link(result.explorer ?? '')}`);
       console.log();
     } catch (err) {
       quoteSpin.stop();
@@ -137,7 +139,8 @@ tradeCommand
     const balanceSpin = spinner('Checking balance...').start();
     
     try {
-      const { balance } = await client.getMyBalance(options.mint);
+      const { balance: rawBalance } = await client.getMyBalance(options.mint);
+      const balance = rawBalance ?? 0;
       
       balanceSpin.stop();
       
@@ -174,12 +177,14 @@ tradeCommand
         style: { head: [], border: [] },
       });
       
+      const sellPriceImpact = quote.price_impact ?? 0;
+      
       table.push(
         { [chalk.cyan('Input')]: `${formatTokens(tokenAmount)} tokens` },
-        { [chalk.cyan('Output')]: `~${formatSol(quote.output)}` },
-        { [chalk.cyan('Price')]: formatSol(quote.current_price) },
-        { [chalk.cyan('Fee')]: formatSol(quote.fee) },
-        { [chalk.cyan('Price Impact')]: formatPercent(-quote.price_impact) },
+        { [chalk.cyan('Output')]: `~${formatSol(quote.output ?? 0)}` },
+        { [chalk.cyan('Price')]: formatSol(quote.current_price ?? 0) },
+        { [chalk.cyan('Fee')]: formatSol(quote.fee ?? 0) },
+        { [chalk.cyan('Price Impact')]: formatPercent(-sellPriceImpact) },
         { [chalk.cyan('Slippage')]: `${(slippage * 100).toFixed(1)}%` },
       );
       
@@ -191,8 +196,8 @@ tradeCommand
       }
       
       // Check for high price impact
-      if (quote.price_impact > 0.05) {
-        warn(`High price impact: ${(quote.price_impact * 100).toFixed(2)}%`);
+      if (sellPriceImpact > 0.05) {
+        warn(`High price impact: ${(sellPriceImpact * 100).toFixed(2)}%`);
       }
       
       console.log();
@@ -214,10 +219,10 @@ tradeCommand
       success('Trade executed successfully!');
       console.log();
       info(`Signature: ${result.signature}`);
-      info(`Tokens sold: ${formatTokens(result.trade.tokenAmount)}`);
-      info(`SOL received: ${formatSol(result.trade.solAmount)}`);
+      info(`Tokens sold: ${formatTokens(result.trade?.tokenAmount ?? 0)}`);
+      info(`SOL received: ${formatSol(result.trade?.solAmount ?? 0)}`);
       console.log();
-      info(`Explorer: ${link(result.explorer)}`);
+      info(`Explorer: ${link(result.explorer ?? '')}`);
       console.log();
     } catch (err) {
       balanceSpin.stop();
@@ -260,12 +265,14 @@ tradeCommand
         style: { head: [], border: [] },
       });
       
+      const quotePriceImpact = quote.price_impact ?? 0;
+      
       table.push(
         { [chalk.cyan('Input')]: isBuy ? `${options.amount} SOL` : `${formatTokens(parseFloat(options.amount))} tokens` },
-        { [chalk.cyan('Output')]: isBuy ? `~${formatTokens(quote.output)} tokens` : `~${formatSol(quote.output)}` },
-        { [chalk.cyan('Price')]: formatSol(quote.current_price) },
-        { [chalk.cyan('Fee')]: formatSol(quote.fee) },
-        { [chalk.cyan('Price Impact')]: formatPercent(isBuy ? quote.price_impact : -quote.price_impact) },
+        { [chalk.cyan('Output')]: isBuy ? `~${formatTokens(quote.output ?? 0)} tokens` : `~${formatSol(quote.output ?? 0)}` },
+        { [chalk.cyan('Price')]: formatSol(quote.current_price ?? 0) },
+        { [chalk.cyan('Fee')]: formatSol(quote.fee ?? 0) },
+        { [chalk.cyan('Price Impact')]: formatPercent(isBuy ? quotePriceImpact : -quotePriceImpact) },
       );
       
       console.log(table.toString());
@@ -315,18 +322,18 @@ tradeCommand
         style: { head: [], border: [] },
       });
       
-      for (const trade of result.trades) {
+      for (const trade of result.trades ?? []) {
         const typeStr = trade.type === 'buy' 
           ? chalk.green('BUY') 
           : chalk.red('SELL');
         
         table.push([
           typeStr,
-          formatSol(trade.sol_amount),
-          formatTokens(trade.token_amount),
-          formatSol(trade.price_sol || trade.price || 0),
-          shortenAddress(trade.trader),
-          new Date(trade.created_at).toLocaleString(),
+          formatSol(trade.sol_amount ?? 0),
+          formatTokens(trade.token_amount ?? 0),
+          formatSol(trade.price ?? 0),
+          shortenAddress(trade.trader ?? ''),
+          new Date(trade.created_at ?? Date.now()).toLocaleString(),
         ]);
       }
       
