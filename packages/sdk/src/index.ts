@@ -8,19 +8,6 @@
 // Main client
 export { ClawdVaultClient, createClient, type ClawdVaultConfig } from './client';
 
-// Streaming client
-export {
-  ClawdVaultStreaming,
-  StreamConnection,
-  createStreaming,
-  type StreamTrade,
-  type StreamTokenUpdate,
-  type StreamTokenConnected,
-  type StreamChatMessage,
-  type StreamReaction,
-  type StreamingOptions,
-} from './streaming';
-
 // Wallet integration
 export {
   type WalletSigner,

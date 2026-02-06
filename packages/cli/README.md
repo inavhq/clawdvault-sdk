@@ -160,54 +160,6 @@ Examples:
   clawdvault trade quote -m TOKEN_MINT -t buy -a 0.1
 ```
 
-### `clawdvault stream`
-
-Real-time data streaming (live trades, prices, chat).
-
-```bash
-# Stream live trades
-clawdvault stream trades [options]
-  -m, --mint <address>     Token mint address (required)
-  --json                   Output as JSON (one object per line)
-  --append                 Append mode (simple log format)
-
-# Stream token price updates
-clawdvault stream token [options]
-  -m, --mint <address>     Token mint address (required)
-  --json                   Output as JSON
-
-# Stream chat messages
-clawdvault stream chat [options]
-  -m, --mint <address>     Token mint address (required)
-  --json                   Output as JSON
-
-Examples:
-  # Watch trades in real-time (table mode)
-  clawdvault stream trades -m TOKEN_MINT
-
-  # Watch trades for scripting (JSON output)
-  clawdvault stream trades -m TOKEN_MINT --json
-
-  # Log trades to file
-  clawdvault stream trades -m TOKEN_MINT --append >> trades.log
-
-  # Monitor price changes
-  clawdvault stream token -m TOKEN_MINT
-
-  # Watch chat
-  clawdvault stream chat -m TOKEN_MINT
-
-  # Pipe to jq for filtering
-  clawdvault stream trades -m TOKEN_MINT --json | jq 'select(.type == "buy")'
-```
-
-**Features:**
-- Auto-reconnect on connection loss
-- Graceful shutdown with Ctrl+C
-- Multiple output modes: table (default), append, JSON
-- Table mode clears and updates in-place
-- JSON mode outputs one object per line (great for piping)
-
 ### `clawdvault wallet`
 
 Wallet management and info.

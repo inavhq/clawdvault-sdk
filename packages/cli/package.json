@@ -1,6 +1,6 @@
 {
   "name": "@clawdvault/cli",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "CLI for ClawdVault - Solana token launchpad",
   "main": "dist/index.js",
   "bin": {

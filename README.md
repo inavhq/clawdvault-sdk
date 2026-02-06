@@ -11,7 +11,6 @@ TypeScript SDK and command-line interface for [ClawdVault](https://clawdvault.co
 - 🚀 **Full TypeScript support** with complete type definitions
 - 🔐 **Non-custodial** - your private key never leaves your device
 - 💱 **Smart routing** - automatic bonding curve vs Jupiter DEX routing
-- 📡 **Real-time streaming** - live trades, prices, and chat via SSE
 - 🛠️ **CLI tool** - create tokens and trade from the command line
 - 📦 **Monorepo** - SDK and CLI in separate packages
 
@@ -78,12 +77,6 @@ clawdvault trade buy --mint <address> --sol 0.1
 
 # Sell 50% of holdings
 clawdvault trade sell --mint <address> --percent 50
-
-# Stream live trades (real-time)
-clawdvault stream trades --mint <address>
-
-# Watch token price
-clawdvault stream token --mint <address>
 
 # Create a new token
 clawdvault token create --name "My Token" --symbol "MTK" --image ./logo.png
