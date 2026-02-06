@@ -19,16 +19,19 @@
     "build": "tsup src/index.ts --format cjs,esm --dts --clean",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
     "test": "vitest run",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "generate-types": "openapi-typescript https://clawdvault.com/api/openapi -o src/generated/api.ts",
+    "generate-types:local": "openapi-typescript ../../clawdvault/app/public/openapi.yaml -o src/generated/api.ts"
   },
   "dependencies": {
-    "@solana/web3.js": "^1.91.0",
     "@solana/spl-token": "^0.4.0",
+    "@solana/web3.js": "^1.91.0",
     "bs58": "^5.0.0",
-    "tweetnacl": "^1.0.3",
-    "eventsource": "^2.0.2"
+    "eventsource": "^2.0.2",
+    "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
+    "openapi-typescript": "^7.10.1",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",
     "vitest": "^1.2.0"

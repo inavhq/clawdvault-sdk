@@ -1,359 +1,100 @@
 /**
  * ClawdVault API Types
- * Generated from OpenAPI spec
+ * Generated from OpenAPI spec with helper types for SDK usage
  */
 
-// ============ Core Schemas ============
+import type { paths, components } from './generated/api';
 
-export interface Token {
-  mint: string;
-  name: string;
-  symbol: string;
-  description?: string;
-  image?: string;
-  creator: string;
-  creator_name?: string;
-  price_sol: number;
-  market_cap_sol: number;
-  volume_24h?: number;
-  virtual_sol_reserves: number;
-  virtual_token_reserves: number;
-  real_sol_reserves: number;
-  real_token_reserves: number;
-  graduated: boolean;
-  migrated_to_raydium: boolean;
-  twitter?: string;
-  telegram?: string;
-  website?: string;
-  created_at: string;
-}
+// ============ Generated Schema Types ============
+// Re-export core schemas from OpenAPI spec
 
-export interface Trade {
-  id: string;
-  type: 'buy' | 'sell';
-  sol_amount: number;
-  token_amount: number;
-  price: number;
-  price_sol?: number;  // Alternative price field from some API responses
-  trader: string;
-  signature: string;
-  created_at: string;
-}
+export type Token = components['schemas']['Token'];
+export type Trade = components['schemas']['Trade'];
+export type ChatMessage = components['schemas']['ChatMessage'];
+export type UserProfile = components['schemas']['UserProfile'];
 
-export interface ChatMessage {
-  id: string;
-  wallet: string;
-  username?: string;
-  message: string;
-  reply_to?: string;
-  reactions: Record<string, string[]>;
-  created_at: string;
-}
+// ============ Helper Type Utilities ============
 
-export interface UserProfile {
-  wallet: string;
-  username?: string;
-  avatar?: string;
-  created_at: string;
-}
+/** Extract JSON request body from a path operation */
+type RequestBody<T> = T extends { requestBody: { content: { 'application/json': infer B } } } ? B : never;
 
-// ============ Request Types ============
+/** Extract JSON response body from a path operation's 200 response */
+type ResponseBody<T> = T extends { responses: { 200: { content: { 'application/json': infer R } } } } ? R : never;
 
-export interface PrepareCreateRequest {
-  creator: string;
-  name: string;
-  symbol: string;
-  initialBuy?: number;
-}
+/** Extract query parameters from a path operation (handles optional query) */
+type QueryParams<T> = T extends { parameters: { query?: infer Q } } 
+  ? (Q extends undefined ? Record<string, never> : NonNullable<Q>)
+  : T extends { parameters: { query: infer Q } } 
+    ? Q 
+    : Record<string, never>;
 
-export interface ExecuteCreateRequest {
-  signedTransaction: string;
-  mint: string;
-  creator: string;
-  name: string;
-  symbol: string;
-  description?: string;
-  image?: string;
-  twitter?: string;
-  telegram?: string;
-  website?: string;
-}
+// ============ Request Types (from OpenAPI paths) ============
 
-export interface PrepareTradeRequest {
-  mint: string;
-  type: 'buy' | 'sell';
-  amount: number;
-  wallet: string;
-  slippage?: number;
-}
+export type PrepareCreateRequest = RequestBody<paths['/token/prepare-create']['post']>;
+export type ExecuteCreateRequest = RequestBody<paths['/token/execute-create']['post']>;
+export type PrepareTradeRequest = RequestBody<paths['/trade/prepare']['post']>;
+export type ExecuteTradeRequest = RequestBody<paths['/trade/execute']['post']>;
+export type JupiterSwapRequest = RequestBody<paths['/trade/jupiter']['post']>;
+export type JupiterExecuteRequest = RequestBody<paths['/trade/jupiter/execute']['post']>;
+export type SendChatRequest = RequestBody<paths['/chat']['post']>;
+export type UpdateProfileRequest = RequestBody<paths['/profile']['post']>;
+export type AddReactionRequest = RequestBody<paths['/reactions']['post']>;
 
-export interface ExecuteTradeRequest {
-  signedTransaction: string;
-  mint: string;
-  type: 'buy' | 'sell';
-  wallet: string;
-}
+// ============ Response Types (from OpenAPI paths) ============
 
-export interface JupiterSwapRequest {
-  mint: string;
-  action: 'buy' | 'sell';
-  amount: string;
-  userPublicKey: string;
-  slippageBps?: number;
-}
+export type PrepareCreateResponse = ResponseBody<paths['/token/prepare-create']['post']>;
+export type ExecuteCreateResponse = ResponseBody<paths['/token/execute-create']['post']>;
+export type TokenListResponse = ResponseBody<paths['/tokens']['get']>;
+export type TokenDetailResponse = ResponseBody<paths['/tokens/{mint}']['get']>;
+export type MetadataResponse = ResponseBody<paths['/metadata/{mint}']['get']>;
+export type QuoteResponse = ResponseBody<paths['/trade']['get']>;
+export type PrepareTradeResponse = ResponseBody<paths['/trade/prepare']['post']>;
+export type ExecuteTradeResponse = ResponseBody<paths['/trade/execute']['post']>;
+export type TradeHistoryResponse = ResponseBody<paths['/trades']['get']>;
+export type CandlesResponse = ResponseBody<paths['/candles']['get']>;
+export type StatsResponse = ResponseBody<paths['/stats']['get']>;
+export type HoldersResponse = ResponseBody<paths['/holders']['get']>;
+export type BalanceResponse = ResponseBody<paths['/balance']['get']>;
+export type SolPriceResponse = ResponseBody<paths['/sol-price']['get']>;
+export type GraduationStatusResponse = ResponseBody<paths['/graduate']['get']>;
+export type JupiterStatusResponse = ResponseBody<paths['/trade/jupiter']['get']>;
+export type JupiterQuoteResponse = ResponseBody<paths['/trade/jupiter']['post']>;
+export type JupiterExecuteResponse = ResponseBody<paths['/trade/jupiter/execute']['post']>;
+export type ChatMessagesResponse = ResponseBody<paths['/chat']['get']>;
+export type SendChatResponse = ResponseBody<paths['/chat']['post']>;
+export type SessionResponse = ResponseBody<paths['/auth/session']['post']>;
+export type SessionValidateResponse = ResponseBody<paths['/auth/session']['get']>;
+export type UploadResponse = ResponseBody<paths['/upload']['post']>;
+export type NetworkStatusResponse = ResponseBody<paths['/network']['get']>;
 
-export interface JupiterExecuteRequest {
-  mint: string;
-  signedTransaction: string;
-  type: 'buy' | 'sell';
-  wallet: string;
-  solAmount?: number;
-  tokenAmount?: number;
-}
+// ============ Query Parameter Types ============
 
-export interface SendChatRequest {
-  mint: string;
-  message: string;
-  replyTo?: string;
-}
+export type TokenListParams = QueryParams<paths['/tokens']['get']>;
+export type QuoteParams = QueryParams<paths['/trade']['get']>;
+export type TradesParams = QueryParams<paths['/trades']['get']>;
+export type CandlesParams = QueryParams<paths['/candles']['get']>;
+export type ChatParams = QueryParams<paths['/chat']['get']>;
 
-export interface UpdateProfileRequest {
-  username?: string;
-  avatar?: string;
-}
+// ============ Extracted Sub-types ============
 
-// ============ Response Types ============
+/** Candle data point */
+export type CandleData = NonNullable<CandlesResponse['candles']>[number];
 
-export interface PrepareCreateResponse {
-  success: boolean;
-  transaction: string;
-  mint: string;
-  programId: string;
-  network: string;
-  initialBuy?: {
-    sol: number;
-    estimatedTokens: number;
-  };
-}
+/** Holder information */
+export type HolderInfo = NonNullable<HoldersResponse['holders']>[number];
 
-export interface ExecuteCreateResponse {
-  success: boolean;
-  signature: string;
-  mint: string;
-  token: Token;
-  explorer: string;
-}
+/** On-chain stats data */
+export type OnChainStats = NonNullable<StatsResponse['onChain']>;
 
-export interface TokenListResponse {
-  tokens: Token[];
-  total: number;
-  page: number;
-  per_page: number;
-}
+/** Graduation data */
+export type GraduationData = NonNullable<GraduationStatusResponse['data']>;
 
-export interface TokenDetailResponse {
-  token: Token;
-  trades: Trade[];
-}
+/** Jupiter quote data */
+export type JupiterQuote = NonNullable<JupiterQuoteResponse['quote']>;
 
-export interface QuoteResponse {
-  input: number;
-  output: number;
-  price_impact: number;
-  fee: number;
-  current_price: number;
-}
+/** Verified trade data from execute response */
+export type VerifiedTrade = NonNullable<ExecuteTradeResponse['trade']>;
 
-export interface PrepareTradeResponse {
-  success: boolean;
-  transaction: string;
-  type: string;
-  input: {
-    sol?: number;
-    fee?: number;
-    tokens?: number;
-  };
-  output: {
-    tokens?: number;
-    minTokens?: number;
-    sol?: number;
-    minSol?: number;
-  };
-  priceImpact: number;
-  currentPrice: number;
-  onChain: boolean;
-}
+// ============ Full API paths export for advanced usage ============
 
-export interface ExecuteTradeResponse {
-  success: boolean;
-  signature: string;
-  explorer: string;
-  slot: number;
-  blockTime: number;
-  trade: {
-    id: string;
-    mint: string;
-    trader: string;
-    type: string;
-    solAmount: number;
-    tokenAmount: number;
-    protocolFee: number;
-    creatorFee: number;
-  };
-}
-
-export interface TradeHistoryResponse {
-  trades: Trade[];
-}
-
-export interface CandleData {
-  time: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
-
-export interface CandlesResponse {
-  mint: string;
-  interval: string;
-  candles: CandleData[];
-}
-
-export interface StatsResponse {
-  success: boolean;
-  mint: string;
-  onChain: {
-    totalSupply: number;
-    bondingCurveBalance: number;
-    circulatingSupply: number;
-    bondingCurveSol: number;
-    virtualSolReserves: number;
-    virtualTokenReserves: number;
-    price: number;
-    marketCap: number;
-    graduated: boolean;
-  };
-}
-
-export interface HolderInfo {
-  address: string;
-  balance: number;
-  percentage: number;
-  label?: string;
-}
-
-export interface HoldersResponse {
-  holders: HolderInfo[];
-}
-
-export interface BalanceResponse {
-  balance: number;
-  wallet: string;
-  mint: string;
-}
-
-export interface SolPriceResponse {
-  price: number;
-  valid: boolean;
-  cached: boolean;
-  source: string;
-  age: number;
-}
-
-export interface GraduationStatusResponse {
-  success: boolean;
-  data: {
-    mint: string;
-    graduated: boolean;
-    migratedToRaydium: boolean;
-    realSolReserves: string;
-    realTokenReserves: string;
-    canMigrate: boolean;
-  };
-}
-
-export interface JupiterStatusResponse {
-  success: boolean;
-  mint: string;
-  graduated: boolean;
-  tradeEndpoint: string;
-}
-
-export interface JupiterQuoteResponse {
-  success: boolean;
-  graduated: boolean;
-  quote: {
-    inputMint: string;
-    outputMint: string;
-    inAmount: string;
-    outAmount: string;
-    priceImpactPct: string;
-    slippageBps: number;
-  };
-  transaction: string;
-  lastValidBlockHeight: number;
-}
-
-export interface ChatMessagesResponse {
-  messages: ChatMessage[];
-}
-
-export interface SessionResponse {
-  success: boolean;
-  token: string;
-  expiresIn: number;
-  wallet: string;
-}
-
-export interface SessionValidateResponse {
-  valid: boolean;
-  wallet: string;
-}
-
-export interface UploadResponse {
-  success: boolean;
-  url: string;
-  filename: string;
-}
-
-export interface NetworkStatusResponse {
-  network: string;
-  programId: string;
-  rpcUrl: string;
-  configInitialized: boolean;
-}
-
-// ============ Query Parameters ============
-
-export interface TokenListParams {
-  sort?: 'created_at' | 'market_cap' | 'volume' | 'price';
-  page?: number;
-  limit?: number;
-  graduated?: boolean;
-}
-
-export interface QuoteParams {
-  mint: string;
-  type: 'buy' | 'sell';
-  amount: number;
-}
-
-export interface TradesParams {
-  mint: string;
-  limit?: number;
-  before?: string;
-}
-
-export interface CandlesParams {
-  mint: string;
-  interval?: '1m' | '5m' | '15m' | '1h' | '1d';
-  limit?: number;
-}
-
-export interface ChatParams {
-  mint: string;
-  limit?: number;
-  before?: string;
-}
+export type { paths, components } from './generated/api';

@@ -154,7 +154,7 @@ export class ClawdVaultClient {
   /**
    * List tokens with optional filters
    */
-  async listTokens(params: TokenListParams = {}): Promise<TokenListResponse> {
+  async listTokens(params: Partial<TokenListParams> = {}): Promise<TokenListResponse> {
     return this.request('GET', '/tokens', { params });
   }
 
@@ -214,13 +214,13 @@ export class ClawdVaultClient {
       initialBuy: params.initialBuy,
     });
 
-    // Step 2: Sign
-    const signedTx = await signAndSerialize(prepared.transaction, this.signer);
+    // Step 2: Sign (transaction is guaranteed by API contract)
+    const signedTx = await signAndSerialize(prepared.transaction!, this.signer);
 
     // Step 3: Execute
     return this.executeCreate({
       signedTransaction: signedTx,
-      mint: prepared.mint,
+      mint: prepared.mint!,
       creator: wallet,
       name: params.name,
       symbol: params.symbol,
@@ -274,8 +274,8 @@ export class ClawdVaultClient {
       slippage,
     });
 
-    // Sign
-    const signedTx = await signAndSerialize(prepared.transaction, this.signer);
+    // Sign (transaction is guaranteed by API contract)
+    const signedTx = await signAndSerialize(prepared.transaction!, this.signer);
 
     // Execute
     return this.executeTrade({
@@ -305,8 +305,8 @@ export class ClawdVaultClient {
       slippage,
     });
 
-    // Sign
-    const signedTx = await signAndSerialize(prepared.transaction, this.signer);
+    // Sign (transaction is guaranteed by API contract)
+    const signedTx = await signAndSerialize(prepared.transaction!, this.signer);
 
     // Execute
     return this.executeTrade({
@@ -326,7 +326,8 @@ export class ClawdVaultClient {
     }
 
     const wallet = this.signer.publicKey.toBase58();
-    const { balance } = await this.getBalance(wallet, mint);
+    const balanceResponse = await this.getBalance(wallet, mint);
+    const balance = balanceResponse.balance ?? 0;
     
     if (balance <= 0) {
       throw new Error('No tokens to sell');
@@ -440,8 +441,8 @@ export class ClawdVaultClient {
       slippageBps,
     });
 
-    // Sign
-    const signedTx = await signAndSerialize(quote.transaction, this.signer);
+    // Sign (transaction is guaranteed by API contract)
+    const signedTx = await signAndSerialize(quote.transaction!, this.signer);
 
     // Execute
     return this.executeJupiterSwap({
@@ -471,8 +472,8 @@ export class ClawdVaultClient {
       slippageBps,
     });
 
-    // Sign
-    const signedTx = await signAndSerialize(quote.transaction, this.signer);
+    // Sign (transaction is guaranteed by API contract)
+    const signedTx = await signAndSerialize(quote.transaction!, this.signer);
 
     // Execute
     return this.executeJupiterSwap({

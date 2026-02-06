@@ -32,15 +32,15 @@ export {
   verifySignature,
 } from './wallet';
 
-// Types
+// Types - Generated from OpenAPI spec
 export type {
-  // Core schemas
+  // Core schemas (from components.schemas)
   Token,
   Trade,
   ChatMessage,
   UserProfile,
   
-  // Request types
+  // Request types (from paths)
   PrepareCreateRequest,
   ExecuteCreateRequest,
   PrepareTradeRequest,
@@ -49,27 +49,29 @@ export type {
   JupiterExecuteRequest,
   SendChatRequest,
   UpdateProfileRequest,
+  AddReactionRequest,
   
-  // Response types
+  // Response types (from paths)
   PrepareCreateResponse,
   ExecuteCreateResponse,
   TokenListResponse,
   TokenDetailResponse,
+  MetadataResponse,
   QuoteResponse,
   PrepareTradeResponse,
   ExecuteTradeResponse,
   TradeHistoryResponse,
-  CandleData,
   CandlesResponse,
   StatsResponse,
-  HolderInfo,
   HoldersResponse,
   BalanceResponse,
   SolPriceResponse,
   GraduationStatusResponse,
   JupiterStatusResponse,
   JupiterQuoteResponse,
+  JupiterExecuteResponse,
   ChatMessagesResponse,
+  SendChatResponse,
   SessionResponse,
   SessionValidateResponse,
   UploadResponse,
@@ -81,6 +83,18 @@ export type {
   TradesParams,
   CandlesParams,
   ChatParams,
+  
+  // Sub-types
+  CandleData,
+  HolderInfo,
+  OnChainStats,
+  GraduationData,
+  JupiterQuote,
+  VerifiedTrade,
+  
+  // Full API types for advanced usage
+  paths,
+  components,
 } from './types';
 
 // Re-export useful Solana types
