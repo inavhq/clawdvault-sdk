@@ -94,9 +94,10 @@ export class ClawdVaultClient {
       body?: any;
       auth?: boolean;
       formData?: FormData;
+      action?: string;
     } = {}
   ): Promise<T> {
-    const { params, body, auth, formData } = options;
+    const { params, body, auth, formData, action } = options;
     
     let url = `${this.baseUrl}${path}`;
     if (params) {
@@ -117,9 +118,12 @@ export class ClawdVaultClient {
       if (this.sessionToken) {
         headers['Authorization'] = `Bearer ${this.sessionToken}`;
       } else if (this.signer && body) {
-        const { signature, wallet } = await createAuthSignature(this.signer, body);
+        const { signature, wallet } = await createAuthSignature(this.signer, body, action);
         headers['X-Wallet'] = wallet;
         headers['X-Signature'] = signature;
+        if (action) {
+          headers['X-Action'] = action;
+        }
       }
     }
 
@@ -519,7 +523,7 @@ export class ClawdVaultClient {
    * Send chat message
    */
   async sendChat(params: SendChatRequest): Promise<{ success: boolean; message: ChatMessage }> {
-    return this.request('POST', '/chat', { body: params, auth: true });
+    return this.request('POST', '/chat', { body: params, auth: true, action: 'chat' });
   }
 
   /**
@@ -528,7 +532,8 @@ export class ClawdVaultClient {
   async addReaction(messageId: string, emoji: string): Promise<void> {
     await this.request('POST', '/reactions', { 
       body: { messageId, emoji }, 
-      auth: true 
+      auth: true,
+      action: 'react'
     });
   }
 
@@ -538,7 +543,8 @@ export class ClawdVaultClient {
   async removeReaction(messageId: string, emoji: string): Promise<void> {
     await this.request('DELETE', '/reactions', { 
       params: { messageId, emoji },
-      auth: true 
+      auth: true,
+      action: 'unreact'
     });
   }
 
@@ -555,14 +561,14 @@ export class ClawdVaultClient {
    * Update profile
    */
   async updateProfile(params: UpdateProfileRequest): Promise<void> {
-    await this.request('POST', '/profile', { body: params, auth: true });
+    await this.request('POST', '/profile', { body: params, auth: true, action: 'profile' });
   }
 
   /**
    * Create session token
    */
   async createSession(): Promise<SessionResponse> {
-    return this.request('POST', '/auth/session', { body: {}, auth: true });
+    return this.request('POST', '/auth/session', { body: {}, auth: true, action: 'session' });
   }
 
   /**
