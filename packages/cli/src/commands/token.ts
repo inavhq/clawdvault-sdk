@@ -49,19 +49,25 @@ tokenCommand
         return;
       }
       
-      const { token, trades } = result;
+      const token = result.token;
+      const trades = result.trades ?? [];
       
-      console.log(chalk.bold(`\n🪙 ${token.name} (${token.symbol})\n`));
+      if (!token) {
+        console.log(chalk.yellow('Token not found'));
+        return;
+      }
+      
+      console.log(chalk.bold(`\n🪙 ${token.name ?? 'Unknown'} (${token.symbol ?? '???'})\n`));
       
       const table = new Table({
         style: { head: [], border: [] },
       });
       
       table.push(
-        { [chalk.cyan('Mint')]: token.mint },
-        { [chalk.cyan('Creator')]: shortenAddress(token.creator) },
-        { [chalk.cyan('Price')]: formatSol(token.price_sol) },
-        { [chalk.cyan('Market Cap')]: formatSol(token.market_cap_sol) },
+        { [chalk.cyan('Mint')]: token.mint ?? '' },
+        { [chalk.cyan('Creator')]: shortenAddress(token.creator ?? '') },
+        { [chalk.cyan('Price')]: formatSol(token.price_sol ?? 0) },
+        { [chalk.cyan('Market Cap')]: formatSol(token.market_cap_sol ?? 0) },
         { [chalk.cyan('Status')]: token.graduated ? '🎓 Graduated' : '📈 Bonding Curve' },
       );
       
@@ -105,10 +111,10 @@ tokenCommand
           
           tradesTable.push([
             typeStr,
-            formatSol(trade.sol_amount),
-            formatTokens(trade.token_amount),
-            shortenAddress(trade.trader),
-            new Date(trade.created_at).toLocaleString(),
+            formatSol(trade.sol_amount ?? 0),
+            formatTokens(trade.token_amount ?? 0),
+            shortenAddress(trade.trader ?? ''),
+            new Date(trade.created_at ?? Date.now()).toLocaleString(),
           ]);
         }
         
@@ -176,13 +182,13 @@ tokenCommand
       
       success(`Token created successfully!`);
       console.log();
-      info(`Name: ${result.token.name}`);
-      info(`Symbol: ${result.token.symbol}`);
-      info(`Mint: ${result.mint}`);
-      info(`Signature: ${result.signature}`);
+      info(`Name: ${result.token?.name ?? 'Unknown'}`);
+      info(`Symbol: ${result.token?.symbol ?? '???'}`);
+      info(`Mint: ${result.mint ?? ''}`);
+      info(`Signature: ${result.signature ?? ''}`);
       console.log();
-      info(`Explorer: ${link(result.explorer)}`);
-      info(`View: ${link(`https://clawdvault.com/${result.mint}`)}`);
+      info(`Explorer: ${link(result.explorer ?? '')}`);
+      info(`View: ${link(`https://clawdvault.com/${result.mint ?? ''}`)}`);
       console.log();
     } catch (err) {
       createSpin.stop();
@@ -211,18 +217,24 @@ tokenCommand
       
       console.log(chalk.bold(`\n📈 On-Chain Stats\n`));
       
-      const { onChain } = result;
+      const onChain = result.onChain;
+      
+      if (!onChain) {
+        console.log(chalk.yellow('No on-chain data available'));
+        return;
+      }
+      
       const table = new Table({
         style: { head: [], border: [] },
       });
       
       table.push(
-        { [chalk.cyan('Price')]: formatSol(onChain.price) },
-        { [chalk.cyan('Market Cap')]: formatSol(onChain.marketCap) },
-        { [chalk.cyan('Total Supply')]: formatTokens(onChain.totalSupply) },
-        { [chalk.cyan('Circulating')]: formatTokens(onChain.circulatingSupply) },
-        { [chalk.cyan('Curve Balance')]: formatTokens(onChain.bondingCurveBalance) },
-        { [chalk.cyan('Curve SOL')]: formatSol(onChain.bondingCurveSol) },
+        { [chalk.cyan('Price')]: formatSol(onChain.price ?? 0) },
+        { [chalk.cyan('Market Cap')]: formatSol(onChain.marketCap ?? 0) },
+        { [chalk.cyan('Total Supply')]: formatTokens(onChain.totalSupply ?? 0) },
+        { [chalk.cyan('Circulating')]: formatTokens(onChain.circulatingSupply ?? 0) },
+        { [chalk.cyan('Curve Balance')]: formatTokens(onChain.bondingCurveBalance ?? 0) },
+        { [chalk.cyan('Curve SOL')]: formatSol(onChain.bondingCurveSol ?? 0) },
         { [chalk.cyan('Status')]: onChain.graduated ? '🎓 Graduated' : '📈 Bonding' },
       );
       
@@ -266,12 +278,12 @@ tokenCommand
         style: { head: [], border: [] },
       });
       
-      result.holders.forEach((holder, i) => {
+      (result.holders ?? []).forEach((holder, i) => {
         table.push([
           i + 1,
-          shortenAddress(holder.address),
-          formatTokens(holder.balance),
-          `${holder.percentage.toFixed(2)}%`,
+          shortenAddress(holder.address ?? ''),
+          formatTokens(holder.balance ?? 0),
+          `${(holder.percentage ?? 0).toFixed(2)}%`,
           holder.label || '-',
         ]);
       });
@@ -301,10 +313,10 @@ tokenCommand
     
     // Get SOL price for USD conversion
     const client = createReadOnlyClient();
-    let solPrice = 0;
+    let solPrice: number = 0;
     try {
-      const { price } = await client.getSolPrice();
-      solPrice = price;
+      const priceResult = await client.getSolPrice();
+      solPrice = priceResult.price ?? 0;
     } catch {
       // Continue without USD prices
     }
