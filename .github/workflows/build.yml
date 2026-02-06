@@ -1,0 +1,48 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build SDK
+      run: npm run build -w packages/sdk
+      
+    - name: Build CLI
+      run: npm run build -w packages/cli
+      
+    - name: Type check SDK
+      run: cd packages/sdk && npx tsc --noEmit
+      
+    - name: Type check CLI
+      run: cd packages/cli && npx tsc --noEmit
+      
+    - name: Verify builds
+      run: |
+        if [ ! -d "packages/sdk/dist" ]; then
+          echo "❌ SDK build failed - dist not found"
+          exit 1
+        fi
+        if [ ! -d "packages/cli/dist" ]; then
+          echo "❌ CLI build failed - dist not found"
+          exit 1
+        fi
+        echo "✅ Both packages built successfully"
