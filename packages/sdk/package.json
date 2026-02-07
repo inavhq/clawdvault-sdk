@@ -1,6 +1,6 @@
 {
   "name": "@clawdvault/sdk",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "TypeScript SDK for ClawdVault - Solana token launchpad",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

@@ -17,7 +17,7 @@ const program = new Command();
 program
   .name('clawdvault')
   .description('CLI for ClawdVault - Solana token launchpad')
-  .version('0.1.0');
+  .version('0.4.0');
 
 // Register commands
 program.addCommand(tokensCommand);

@@ -127,6 +127,59 @@ client.setSigner(newSigner);
 const address = client.getWalletAddress(); // returns string | null
 ```
 
+## USD Price Fields
+
+The SDK provides native USD pricing on tokens, trades, and stats:
+
+### Token Fields
+
+```typescript
+const { token } = await client.getToken('MINT_ADDRESS');
+
+// USD Fields
+console.log(token.price_usd);        // Current price in USD
+console.log(token.market_cap_usd);   // Market cap in USD
+
+// SOL Fields (still available)
+console.log(token.price_sol);        // Price in SOL
+console.log(token.market_cap_sol);   // Market cap in SOL
+```
+
+### Trade Fields
+
+```typescript
+const { trades } = await client.getTrades({ mint: 'MINT_ADDRESS' });
+
+for (const trade of trades) {
+  console.log(trade.price_usd);      // Price in USD at time of trade
+  console.log(trade.sol_price_usd);  // SOL/USD price at time of trade
+  console.log(trade.price_sol);      // Price in SOL at time of trade
+}
+```
+
+### Candles with Currency
+
+```typescript
+// Get candles in USD
+const { candles } = await client.getCandles({
+  mint: 'MINT_ADDRESS',
+  interval: '5m',
+  currency: 'usd'  // 'usd' or 'sol'
+});
+
+// candles[0].open, high, low, close are in USD when currency='usd'
+```
+
+### Stats Fields
+
+```typescript
+const stats = await client.getStats('MINT_ADDRESS');
+
+console.log(stats.onChain?.priceUsd);      // Price in USD
+console.log(stats.onChain?.marketCapUsd);  // Market cap in USD
+console.log(stats.onChain?.solPriceUsd);   // SOL/USD rate
+```
+
 ## Browser Usage with Phantom Wallet
 
 ```typescript
@@ -205,21 +258,27 @@ const jupSell = await client.sellJupiter('MINT', 1000000, 50);
 ### Price & Market Data
 
 ```typescript
-// Trade history
+// Trade history (includes USD prices)
 const { trades } = await client.getTrades({
   mint: 'MINT_ADDRESS',
   limit: 50
 });
+// trades[0].price_usd       - Price in USD at trade time
+// trades[0].sol_price_usd   - SOL price at trade time
 
-// OHLCV candles
+// OHLCV candles (SOL or USD)
 const { candles } = await client.getCandles({
   mint: 'MINT_ADDRESS',
-  interval: '1m',  // '1m' | '5m' | '15m' | '1h' | '4h' | '1d'
-  limit: 100
+  interval: '1m',   // '1m' | '5m' | '15m' | '1h' | '4h' | '1d'
+  limit: 100,
+  currency: 'usd'   // 'usd' or 'sol' (default: 'sol')
 });
 
-// On-chain stats
+// On-chain stats (includes USD market cap)
 const stats = await client.getStats('MINT_ADDRESS');
+// stats.onChain.priceUsd      - Price in USD
+// stats.onChain.marketCapUsd  - Market cap in USD
+// stats.onChain.solPriceUsd   - SOL/USD price
 
 // Top holders
 const { holders } = await client.getHolders('MINT_ADDRESS');

@@ -37,8 +37,17 @@ const client = createClient();
 // List tokens
 const { tokens } = await client.listTokens({ sort: 'market_cap', limit: 10 });
 
-// Get token details
+// Get token details (includes USD prices)
 const { token, trades } = await client.getToken('TOKEN_MINT_ADDRESS');
+console.log(token.price_usd);        // Price in USD
+console.log(token.market_cap_usd);   // Market cap in USD
+
+// Get candles in USD
+const { candles } = await client.getCandles({
+  mint: 'TOKEN_MINT_ADDRESS',
+  interval: '5m',
+  currency: 'usd'  // or 'sol'
+});
 
 // For trading, add a wallet signer
 const signer = KeypairSigner.fromFile('/path/to/wallet.json');
@@ -66,11 +75,14 @@ const smartBuy = await client.smartBuy('TOKEN_MINT_ADDRESS', 0.5);
 # Initialize wallet
 clawdvault wallet init
 
-# List tokens
+# List tokens (shows USD prices by default)
 clawdvault tokens list
 
 # Get token details
 clawdvault token get <mint>
+
+# Get price candles in USD
+clawdvault token candles <mint> --currency usd
 
 # Buy tokens (requires wallet)
 clawdvault trade buy --mint <address> --sol 0.1
@@ -141,9 +153,9 @@ export CLAWDVAULT_WALLET=~/.config/solana/id.json
 
 | Method | Description |
 |--------|-------------|
-| `getTrades(params)` | Get trade history |
-| `getCandles(params)` | Get OHLCV candles |
-| `getStats(mint)` | Get on-chain stats |
+| `getTrades(params)` | Get trade history with USD prices |
+| `getCandles(params)` | Get OHLCV candles (SOL or USD) |
+| `getStats(mint)` | Get on-chain stats with USD market cap |
 | `getHolders(mint)` | Get top holders |
 | `getBalance(wallet, mint)` | Get token balance for any wallet |
 | `getMyBalance(mint)` | Get token balance for connected wallet |
@@ -263,6 +275,67 @@ try {
 }
 ```
 
+## USD Price Support
+
+The SDK and CLI now support native USD pricing throughout:
+
+### SDK - USD Fields
+
+```typescript
+// Token object includes USD prices
+const { token } = await client.getToken('MINT_ADDRESS');
+console.log(token.price_usd);       // Price in USD
+console.log(token.market_cap_usd);  // Market cap in USD
+
+// Trade object includes USD price at trade time
+const { trades } = await client.getTrades({ mint: 'MINT_ADDRESS' });
+for (const trade of trades) {
+  console.log(trade.price_usd);       // Price in USD at trade time
+  console.log(trade.sol_price_usd);   // SOL price at trade time
+}
+
+// Get candles in USD or SOL
+const { candles } = await client.getCandles({
+  mint: 'MINT_ADDRESS',
+  interval: '5m',
+  limit: 100,
+  currency: 'usd'  // 'usd' or 'sol'
+});
+
+// Stats include USD values
+const stats = await client.getStats('MINT_ADDRESS');
+console.log(stats.onChain?.priceUsd);      // USD price
+console.log(stats.onChain?.marketCapUsd);  // USD market cap
+console.log(stats.onChain?.solPriceUsd);   // SOL/USD rate
+```
+
+### CLI - USD Display
+
+All CLI commands now display USD values by default:
+
+```bash
+# Token list shows USD price and market cap
+clawdvault tokens list
+
+# Token details shows USD with SOL in parentheses
+clawdvault token get <mint>
+# Output: Price: $0.001234 (0.00000678 SOL)
+
+# Stats shows USD market cap
+clawdvault token stats <mint>
+
+# Trade history shows USD prices
+clawdvault trade history -m <mint>
+
+# Candles default to USD, use --currency to override
+clawdvault token candles <mint>              # USD candles
+clawdvault token candles <mint> --currency sol  # SOL candles
+```
+
+### Breaking Changes
+
+**v0.4.0** - CLI now displays USD prices by default instead of SOL. If you need SOL values, they are shown in parentheses alongside USD values, or use `--json` for raw data.
+
 ## CLI Commands
 
 ### tokens
@@ -302,6 +375,13 @@ clawdvault token stats <mint> [--json]
 
 # Get holders
 clawdvault token holders <mint> [--json]
+
+# Get price candles (OHLCV data)
+clawdvault token candles <mint> [options]
+  -i, --interval <interval>  Candle interval: 1m, 5m, 15m, 1h, 1d (default: 5m)
+  -l, --limit <count>        Number of candles to fetch (default: 100)
+  -c, --currency <currency>  Currency for prices: sol or usd (default: usd)
+  --json                     Output as JSON
 ```
 
 ### trade

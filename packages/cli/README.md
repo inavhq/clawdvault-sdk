@@ -64,6 +64,37 @@ clawdvault trade sell --mint TOKEN_MINT_ADDRESS --amount 1000000
 clawdvault trade sell --mint TOKEN_MINT_ADDRESS --percent 50
 ```
 
+## USD Price Display
+
+As of v0.4.0, the CLI displays USD prices by default for all price and market cap values:
+
+```bash
+# Token list shows USD price and market cap
+clawdvault tokens list
+# Output: SYMBOL | Name | $0.001234 | $50,000 | ...
+
+# Token details shows USD with SOL in parentheses
+clawdvault token get <mint>
+# Output: Price: $0.001234 (0.00000678 SOL)
+
+# Stats shows USD market cap
+clawdvault token stats <mint>
+# Output: Market Cap: $50,000
+
+# Trade history shows USD prices
+clawdvault trade history -m <mint>
+# Output: Shows price_usd for each trade
+
+# Candles default to USD
+clawdvault token candles <mint>
+# Output: OHLCV values in USD
+
+# Use --currency sol for SOL-denominated candles
+clawdvault token candles <mint> --currency sol
+```
+
+**Breaking Change:** Previous versions displayed SOL values by default. USD is now the default currency for price display.
+
 ## Commands Reference
 
 ### `clawdvault tokens`
@@ -112,10 +143,18 @@ clawdvault token stats <mint> [--json]
 # Get top holders
 clawdvault token holders <mint> [--json]
 
+# Get price candles
+clawdvault token candles <mint> [options]
+  -i, --interval <interval>  Candle interval: 1m, 5m, 15m, 1h, 1d (default: 5m)
+  -l, --limit <count>        Number of candles (default: 100)
+  -c, --currency <currency>  Currency: sol or usd (default: usd)
+  --json                     Output as JSON
+
 Examples:
   clawdvault token get 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU
   clawdvault token create -n "Moon Token" -s "MOON" -i ./moon.png
   clawdvault token create --name "Test" --symbol "TEST" --initial-buy 0.5
+  clawdvault token candles <mint> --interval 15m --currency usd
 ```
 
 ### `clawdvault trade`
