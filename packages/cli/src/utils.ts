@@ -249,7 +249,15 @@ export function formatTokens(amount: number): string {
  * Format USD amount
  */
 export function formatUsd(amount: number): string {
-  return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  // Show more decimals for small amounts, max 10 for very small prices
+  const absAmount = Math.abs(amount);
+  let maximumFractionDigits = 2;
+  if (absAmount < 0.000001) maximumFractionDigits = 10;
+  else if (absAmount < 0.0001) maximumFractionDigits = 8;
+  else if (absAmount < 0.01) maximumFractionDigits = 6;
+  else if (absAmount < 1) maximumFractionDigits = 4;
+  
+  return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits })}`;
 }
 
 /**

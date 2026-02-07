@@ -293,4 +293,75 @@ tokenCommand
     }
   });
 
+// Get candles
+tokenCommand
+  .command('candles <mint>')
+  .description('Get price candles')
+  .option('-i, --interval <interval>', 'Candle interval (1m, 5m, 15m, 1h, 1d)', '5m')
+  .option('-l, --limit <count>', 'Number of candles to fetch', '100')
+  .option('-c, --currency <currency>', 'Currency for prices (sol or usd)', 'usd')
+  .option('--json', 'Output as JSON')
+  .action(async (mint: string, options) => {
+    const spin = spinner('Fetching candles...').start();
+    
+    try {
+      const client = createReadOnlyClient();
+      const result = await client.getCandles({
+        mint,
+        interval: options.interval,
+        limit: parseInt(options.limit),
+        currency: options.currency,
+      });
+      
+      spin.stop();
+      
+      if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+        return;
+      }
+      
+      console.log(chalk.bold(`\n📊 Price Candles (${options.currency.toUpperCase()})\n`));
+      
+      const candles = result.candles ?? [];
+      if (candles.length === 0) {
+        console.log(chalk.yellow('No candles available'));
+        return;
+      }
+      
+      const table = new Table({
+        head: [
+          chalk.cyan('Time'),
+          chalk.cyan('Open'),
+          chalk.cyan('High'),
+          chalk.cyan('Low'),
+          chalk.cyan('Close'),
+          chalk.cyan('Volume'),
+        ],
+        style: { head: [], border: [] },
+      });
+      
+      const isUsd = options.currency === 'usd';
+      const formatPrice = isUsd ? formatUsd : formatSol;
+      
+      candles.slice(-20).forEach((c: any) => {
+        table.push([
+          new Date(c.time * 1000).toLocaleString(),
+          formatPrice(c.open),
+          formatPrice(c.high),
+          formatPrice(c.low),
+          formatPrice(c.close),
+          formatTokens(c.volume),
+        ]);
+      });
+      
+      console.log(table.toString());
+      console.log();
+      console.log(chalk.gray(`Showing last ${Math.min(20, candles.length)} of ${candles.length} candles`));
+      console.log();
+    } catch (err) {
+      spin.stop();
+      handleError(err);
+    }
+  });
+
 // NOTE: Token watch command removed (streaming not yet supported)
