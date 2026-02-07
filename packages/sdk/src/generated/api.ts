@@ -536,6 +536,8 @@ export interface paths {
          * Get OHLCV candles
          * @description Returns candlestick data for charting. This is the recommended source
          *     of truth for price display. Use the last candle's `close` for current price.
+         *
+         *     Set `currency=usd` to get USD-denominated candles.
          */
         get: {
             parameters: {
@@ -543,6 +545,8 @@ export interface paths {
                     mint: string;
                     interval?: "1m" | "5m" | "15m" | "1h" | "1d";
                     limit?: number;
+                    /** @description Currency for OHLCV values (sol or usd) */
+                    currency?: "sol" | "usd";
                 };
                 header?: never;
                 path?: never;
@@ -559,6 +563,8 @@ export interface paths {
                         "application/json": {
                             mint?: string;
                             interval?: string;
+                            /** @enum {string} */
+                            currency?: "sol" | "usd";
                             candles?: {
                                 /** @description Unix timestamp (seconds) */
                                 time?: number;
@@ -591,7 +597,7 @@ export interface paths {
         };
         /**
          * Get on-chain stats
-         * @description Returns bonding curve state directly from Solana.
+         * @description Returns bonding curve state directly from Solana with USD values.
          */
         get: {
             parameters: {
@@ -604,7 +610,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description On-chain stats */
+                /** @description On-chain stats with USD values */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -620,8 +626,16 @@ export interface paths {
                                 bondingCurveSol?: number;
                                 virtualSolReserves?: number;
                                 virtualTokenReserves?: number;
+                                /** @description Price in SOL */
                                 price?: number;
+                                /** @description Price in USD */
+                                priceUsd?: number;
+                                /** @description Market cap in SOL */
                                 marketCap?: number;
+                                /** @description Market cap in USD */
+                                marketCapUsd?: number;
+                                /** @description SOL price at time of request */
+                                solPriceUsd?: number;
                                 graduated?: boolean;
                             };
                         };
@@ -1367,7 +1381,11 @@ export interface components {
             creator?: string;
             creator_name?: string;
             price_sol?: number;
+            /** @description Price in USD */
+            price_usd?: number;
             market_cap_sol?: number;
+            /** @description Market cap in USD */
+            market_cap_usd?: number;
             volume_24h?: number;
             virtual_sol_reserves?: number;
             virtual_token_reserves?: number;
@@ -1387,7 +1405,12 @@ export interface components {
             type?: "buy" | "sell";
             sol_amount?: number;
             token_amount?: number;
-            price?: number;
+            /** @description Price in SOL */
+            price_sol?: number;
+            /** @description Price in USD (calculated from sol_price_usd) */
+            price_usd?: number;
+            /** @description SOL price at time of trade */
+            sol_price_usd?: number;
             trader?: string;
             signature?: string;
             /** Format: date-time */

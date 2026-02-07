@@ -60,8 +60,8 @@ tokenCommand
       table.push(
         { [chalk.cyan('Mint')]: token.mint ?? '' },
         { [chalk.cyan('Creator')]: shortenAddress(token.creator ?? '') },
-        { [chalk.cyan('Price')]: formatSol(token.price_sol ?? 0) },
-        { [chalk.cyan('Market Cap')]: formatSol(token.market_cap_sol ?? 0) },
+        { [chalk.cyan('Price')]: `${formatUsd(token.price_usd ?? 0)} (${formatSol(token.price_sol ?? 0)})` },
+        { [chalk.cyan('Market Cap')]: formatUsd(token.market_cap_usd ?? 0) },
         { [chalk.cyan('Status')]: token.graduated ? '🎓 Graduated' : '📈 Bonding Curve' },
       );
       
@@ -92,6 +92,7 @@ tokenCommand
             chalk.cyan('Type'),
             chalk.cyan('SOL'),
             chalk.cyan('Tokens'),
+            chalk.cyan('Price USD'),
             chalk.cyan('Trader'),
             chalk.cyan('Time'),
           ],
@@ -107,6 +108,7 @@ tokenCommand
             typeStr,
             formatSol(trade.sol_amount ?? 0),
             formatTokens(trade.token_amount ?? 0),
+            formatUsd(trade.price_usd ?? 0),
             shortenAddress(trade.trader ?? ''),
             new Date(trade.created_at ?? Date.now()).toLocaleString(),
           ]);
@@ -223,12 +225,13 @@ tokenCommand
       });
       
       table.push(
-        { [chalk.cyan('Price')]: formatSol(onChain.price ?? 0) },
-        { [chalk.cyan('Market Cap')]: formatSol(onChain.marketCap ?? 0) },
+        { [chalk.cyan('Price')]: `${formatUsd(onChain.priceUsd ?? 0)} (${formatSol(onChain.price ?? 0)})` },
+        { [chalk.cyan('Market Cap')]: formatUsd(onChain.marketCapUsd ?? 0) },
         { [chalk.cyan('Total Supply')]: formatTokens(onChain.totalSupply ?? 0) },
         { [chalk.cyan('Circulating')]: formatTokens(onChain.circulatingSupply ?? 0) },
         { [chalk.cyan('Curve Balance')]: formatTokens(onChain.bondingCurveBalance ?? 0) },
         { [chalk.cyan('Curve SOL')]: formatSol(onChain.bondingCurveSol ?? 0) },
+        { [chalk.cyan('SOL Price')]: formatUsd(onChain.solPriceUsd ?? 0) },
         { [chalk.cyan('Status')]: onChain.graduated ? '🎓 Graduated' : '📈 Bonding' },
       );
       

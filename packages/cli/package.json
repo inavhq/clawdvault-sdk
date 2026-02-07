@@ -1,6 +1,6 @@
 {
   "name": "@clawdvault/cli",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "CLI for ClawdVault - Solana token launchpad",
   "main": "dist/index.js",
   "bin": {
@@ -15,7 +15,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@clawdvault/sdk": "^0.3.2",
+    "@clawdvault/sdk": "^0.4.0",
     "@solana/spl-token": "^0.4.0",
     "@solana/web3.js": "^1.91.0",
     "bip39": "^3.1.0",

@@ -9,6 +9,7 @@ import {
   spinner, 
   formatSol, 
   formatTokens,
+  formatUsd,
   formatPercent,
   shortenAddress, 
   handleError,
@@ -62,7 +63,7 @@ tradeCommand
       table.push(
         { [chalk.cyan('Input')]: `${solAmount} SOL` },
         { [chalk.cyan('Output')]: `~${formatTokens(quote.output ?? 0)} tokens` },
-        { [chalk.cyan('Price')]: formatSol(quote.current_price ?? 0) },
+        { [chalk.cyan('Price per Token')]: formatSol(quote.current_price ?? 0) },
         { [chalk.cyan('Fee')]: formatSol(quote.fee ?? 0) },
         { [chalk.cyan('Price Impact')]: formatPercent(priceImpact) },
         { [chalk.cyan('Slippage')]: `${(slippage * 100).toFixed(1)}%` },
@@ -177,7 +178,7 @@ tradeCommand
       table.push(
         { [chalk.cyan('Input')]: `${formatTokens(tokenAmount)} tokens` },
         { [chalk.cyan('Output')]: `~${formatSol(quote.output ?? 0)}` },
-        { [chalk.cyan('Price')]: formatSol(quote.current_price ?? 0) },
+        { [chalk.cyan('Price per Token')]: formatSol(quote.current_price ?? 0) },
         { [chalk.cyan('Fee')]: formatSol(quote.fee ?? 0) },
         { [chalk.cyan('Price Impact')]: formatPercent(-sellPriceImpact) },
         { [chalk.cyan('Slippage')]: `${(slippage * 100).toFixed(1)}%` },
@@ -265,7 +266,7 @@ tradeCommand
       table.push(
         { [chalk.cyan('Input')]: isBuy ? `${options.amount} SOL` : `${formatTokens(parseFloat(options.amount))} tokens` },
         { [chalk.cyan('Output')]: isBuy ? `~${formatTokens(quote.output ?? 0)} tokens` : `~${formatSol(quote.output ?? 0)}` },
-        { [chalk.cyan('Price')]: formatSol(quote.current_price ?? 0) },
+        { [chalk.cyan('Price per Token')]: formatSol(quote.current_price ?? 0) },
         { [chalk.cyan('Fee')]: formatSol(quote.fee ?? 0) },
         { [chalk.cyan('Price Impact')]: formatPercent(isBuy ? quotePriceImpact : -quotePriceImpact) },
       );
@@ -310,7 +311,7 @@ tradeCommand
           chalk.cyan('Type'),
           chalk.cyan('SOL'),
           chalk.cyan('Tokens'),
-          chalk.cyan('Price'),
+          chalk.cyan('Price USD'),
           chalk.cyan('Trader'),
           chalk.cyan('Time'),
         ],
@@ -326,7 +327,7 @@ tradeCommand
           typeStr,
           formatSol(trade.sol_amount ?? 0),
           formatTokens(trade.token_amount ?? 0),
-          formatSol(trade.price ?? 0),
+          formatUsd(trade.price_usd ?? 0),
           shortenAddress(trade.trader ?? ''),
           new Date(trade.created_at ?? Date.now()).toLocaleString(),
         ]);
