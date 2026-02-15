@@ -1720,8 +1720,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Agents leaderboard
-         * @description Get paginated list of registered agents, sorted by volume, tokens created, or fees earned.
+         * Agents leaderboard and search
+         * @description Get paginated list of registered agents, sorted by volume, tokens created, or fees earned. Optionally filter by search query (searches name, wallet, Twitter handle).
          */
         get: {
             parameters: {
@@ -1729,6 +1729,8 @@ export interface paths {
                     sortBy?: "volume" | "tokens" | "fees";
                     page?: number;
                     limit?: number;
+                    /** @description Search query (case-insensitive, searches name, wallet, Twitter handle) */
+                    search?: string;
                 };
                 header?: never;
                 path?: never;
@@ -1768,12 +1770,14 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Users leaderboard
-         * @description Get paginated list of users (excludes registered agents), sorted by volume, tokens created, or fees earned.
+         * Users leaderboard and search
+         * @description Get paginated list of users (excludes registered agents), sorted by volume, tokens created, or fees earned. Optionally filter by search query (searches name and wallet).
          */
         get: {
             parameters: {
                 query?: {
+                    /** @description Search query (case-insensitive, searches name and wallet) */
+                    search?: string;
                     sortBy?: "volume" | "tokens" | "fees";
                     page?: number;
                     limit?: number;

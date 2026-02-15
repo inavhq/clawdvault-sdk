@@ -191,13 +191,14 @@ agentCommand
 // List agents (leaderboard)
 agentCommand
   .command('list')
-  .description('List agents leaderboard')
+  .description('List agents leaderboard or search for agents')
   .option('--sort <field>', 'Sort by: volume, tokens, fees', 'volume')
   .option('--limit <n>', 'Number of results', '25')
   .option('--page <n>', 'Page number', '1')
+  .option('--search <query>', 'Search agents by name, wallet, or Twitter handle')
   .option('--json', 'Output as JSON')
   .action(async (options) => {
-    const spin = spinner('Fetching agents...').start();
+    const spin = spinner(options.search ? 'Searching agents...' : 'Fetching agents...').start();
 
     try {
       const client = createReadOnlyClient();
@@ -205,6 +206,7 @@ agentCommand
         sortBy: options.sort as 'volume' | 'tokens' | 'fees',
         limit: parseInt(options.limit),
         page: parseInt(options.page),
+        search: options.search,
       });
 
       spin.stop();
@@ -217,11 +219,85 @@ agentCommand
       const agents = result.agents ?? [];
 
       if (agents.length === 0) {
-        info('No agents found');
+        info(options.search ? `No agents found matching "${options.search}"` : 'No agents found');
         return;
       }
 
-      console.log(chalk.bold(`\n🤖 Agent Leaderboard (sorted by ${options.sort})\n`));
+      const title = options.search
+        ? `🔍 Agent Search: "${options.search}" (sorted by ${options.sort})`
+        : `🤖 Agent Leaderboard (sorted by ${options.sort})`;
+      console.log(chalk.bold(`\n${title}\n`));
+
+      const table = new Table({
+        head: [
+          chalk.cyan('#'),
+          chalk.cyan('Name'),
+          chalk.cyan('Handle'),
+          chalk.cyan('Volume'),
+          chalk.cyan('Tokens'),
+          chalk.cyan('Fees'),
+          chalk.cyan('Verified'),
+        ],
+        style: { head: [], border: [] },
+      });
+
+      const pageOffset = (parseInt(options.page) - 1) * parseInt(options.limit);
+
+      agents.forEach((agent, i) => {
+        table.push([
+          pageOffset + i + 1,
+          agent.name ?? shortenAddress(agent.wallet ?? ''),
+          agent.twitter_handle ? `@${agent.twitter_handle}` : '-',
+          formatUsd(agent.total_volume ?? 0),
+          agent.tokens_created ?? 0,
+          formatUsd(agent.total_fees ?? 0),
+          agent.twitter_verified ? chalk.green('✓') : chalk.gray('-'),
+        ]);
+      });
+
+      console.log(table.toString());
+      console.log(chalk.gray(`\n  Page ${result.page ?? 1} | ${result.total ?? 0} total agents\n`));
+    } catch (err) {
+      spin.stop();
+      handleError(err);
+    }
+  });
+
+// Search agents (convenience alias for list --search)
+agentCommand
+  .command('search <query>')
+  .description('Search for agents by name, wallet, or Twitter handle')
+  .option('--sort <field>', 'Sort by: volume, tokens, fees', 'volume')
+  .option('--limit <n>', 'Number of results', '25')
+  .option('--page <n>', 'Page number', '1')
+  .option('--json', 'Output as JSON')
+  .action(async (query, options) => {
+    const spin = spinner('Searching agents...').start();
+
+    try {
+      const client = createReadOnlyClient();
+      const result = await client.listAgents({
+        sortBy: options.sort as 'volume' | 'tokens' | 'fees',
+        limit: parseInt(options.limit),
+        page: parseInt(options.page),
+        search: query,
+      });
+
+      spin.stop();
+
+      if (options.json) {
+        console.log(JSON.stringify(result, null, 2));
+        return;
+      }
+
+      const agents = result.agents ?? [];
+
+      if (agents.length === 0) {
+        info(`No agents found matching "${query}"`);
+        return;
+      }
+
+      console.log(chalk.bold(`\n🔍 Agent Search: "${query}" (sorted by ${options.sort})\n`));
 
       const table = new Table({
         head: [

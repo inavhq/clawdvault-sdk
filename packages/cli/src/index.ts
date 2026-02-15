@@ -12,6 +12,7 @@ import { tradeCommand } from './commands/trade';
 import { walletCommand } from './commands/wallet';
 import { chatCommand } from './commands/chat';
 import { agentCommand } from './commands/agent';
+import { userCommand } from './commands/user';
 
 const program = new Command();
 
@@ -27,6 +28,7 @@ program.addCommand(tradeCommand);
 program.addCommand(walletCommand);
 program.addCommand(chatCommand);
 program.addCommand(agentCommand);
+program.addCommand(userCommand);
 
 // Global error handling
 program.hook('preAction', () => {
