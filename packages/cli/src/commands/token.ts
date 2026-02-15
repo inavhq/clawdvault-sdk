@@ -6,12 +6,13 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import Table from 'cli-table3';
 import * as fs from 'fs';
-import { 
-  spinner, 
-  formatSol, 
+import type { paths } from '@clawdvault/sdk';
+import {
+  spinner,
+  formatSol,
   formatTokens,
   formatUsd,
-  shortenAddress, 
+  shortenAddress,
   handleError,
   success,
   info,
@@ -21,6 +22,10 @@ import {
   createReadOnlyClient,
   requireWallet,
 } from '../utils';
+
+type Candle = NonNullable<
+  paths['/candles']['get']['responses'][200]['content']['application/json']['candles']
+>[number];
 export const tokenCommand = new Command('token')
   .description('Token operations');
 
@@ -343,14 +348,14 @@ tokenCommand
       const isUsd = options.currency === 'usd';
       const formatPrice = isUsd ? formatUsd : formatSol;
       
-      candles.slice(-20).forEach((c: any) => {
+      candles.slice(-20).forEach((c: Candle) => {
         table.push([
-          new Date(c.time * 1000).toLocaleString(),
-          formatPrice(c.open),
-          formatPrice(c.high),
-          formatPrice(c.low),
-          formatPrice(c.close),
-          formatTokens(c.volume),
+          new Date((c.time ?? 0) * 1000).toLocaleString(),
+          formatPrice(c.open ?? 0),
+          formatPrice(c.high ?? 0),
+          formatPrice(c.low ?? 0),
+          formatPrice(c.close ?? 0),
+          formatTokens(c.volume ?? 0),
         ]);
       });
       
