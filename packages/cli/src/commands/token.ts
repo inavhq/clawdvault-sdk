@@ -6,12 +6,13 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import Table from 'cli-table3';
 import * as fs from 'fs';
-import { 
-  spinner, 
-  formatSol, 
+import {
+  spinner,
+  formatSol,
   formatTokens,
   formatUsd,
-  shortenAddress, 
+  formatPriceChange,
+  shortenAddress,
   handleError,
   success,
   info,
@@ -61,7 +62,10 @@ tokenCommand
         { [chalk.cyan('Mint')]: token.mint ?? '' },
         { [chalk.cyan('Creator')]: shortenAddress(token.creator ?? '') },
         { [chalk.cyan('Price')]: formatSol(token.price_sol ?? 0) },
+        { [chalk.cyan('Price USD')]: token.price_usd ? formatUsd(token.price_usd) : 'N/A' },
+        { [chalk.cyan('24h Change')]: formatPriceChange(token.price_change_24h) },
         { [chalk.cyan('Market Cap')]: formatSol(token.market_cap_sol ?? 0) },
+        { [chalk.cyan('Market Cap USD')]: token.market_cap_usd ? formatUsd(token.market_cap_usd) : 'N/A' },
         { [chalk.cyan('Status')]: token.graduated ? '🎓 Graduated' : '📈 Bonding Curve' },
       );
       

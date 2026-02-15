@@ -95,6 +95,26 @@ export type JupiterQuote = NonNullable<JupiterQuoteResponse['quote']>;
 /** Verified trade data from execute response */
 export type VerifiedTrade = NonNullable<ExecuteTradeResponse['trade']>;
 
+// ============ Agent Types (from OpenAPI paths) ============
+
+export type AgentRegisterRequest = RequestBody<paths['/agent/register']['post']>;
+export type AgentClaimRequest = RequestBody<paths['/agent/claim']['post']>;
+
+export type AgentRegisterResponse = ResponseBody<paths['/agent/register']['post']>;
+export type AgentClaimResponse = ResponseBody<paths['/agent/claim']['post']>;
+export type AgentsListResponse = ResponseBody<paths['/agents']['get']>;
+export type UsersListResponse = ResponseBody<paths['/users']['get']>;
+export type SiteStatsResponse = ResponseBody<paths['/site-stats']['get']>;
+
+export type AgentsListParams = QueryParams<paths['/agents']['get']>;
+export type UsersListParams = QueryParams<paths['/users']['get']>;
+
+/** Agent leaderboard entry */
+export type AgentEntry = components['schemas']['AgentEntry'];
+
+/** User leaderboard entry */
+export type UserEntry = components['schemas']['UserEntry'];
+
 // ============ Full API paths export for advanced usage ============
 
 export type { paths, components } from './generated/api';

@@ -261,6 +261,16 @@ export function formatPercent(value: number): string {
 }
 
 /**
+ * Format price change percentage (already in % form, e.g. 5.2 = 5.2%)
+ */
+export function formatPriceChange(value: number | null | undefined): string {
+  if (value == null) return chalk.gray('N/A');
+  const sign = value >= 0 ? '+' : '';
+  const formatted = `${sign}${value.toFixed(2)}%`;
+  return value >= 0 ? chalk.green(formatted) : chalk.red(formatted);
+}
+
+/**
  * Shorten address
  */
 export function shortenAddress(address: string, chars = 4): string {

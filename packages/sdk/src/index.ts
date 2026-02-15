@@ -78,7 +78,20 @@ export type {
   GraduationData,
   JupiterQuote,
   VerifiedTrade,
-  
+
+  // Agent types
+  AgentRegisterRequest,
+  AgentClaimRequest,
+  AgentRegisterResponse,
+  AgentClaimResponse,
+  AgentsListResponse,
+  UsersListResponse,
+  SiteStatsResponse,
+  AgentsListParams,
+  UsersListParams,
+  AgentEntry,
+  UserEntry,
+
   // Full API types for advanced usage
   paths,
   components,

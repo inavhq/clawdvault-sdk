@@ -326,7 +326,7 @@ tradeCommand
           typeStr,
           formatSol(trade.sol_amount ?? 0),
           formatTokens(trade.token_amount ?? 0),
-          formatSol(trade.price ?? 0),
+          formatSol(trade.price_sol ?? 0),
           shortenAddress(trade.trader ?? ''),
           new Date(trade.created_at ?? Date.now()).toLocaleString(),
         ]);

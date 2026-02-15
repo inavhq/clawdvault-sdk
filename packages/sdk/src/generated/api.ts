@@ -151,9 +151,9 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    sort?: "created_at" | "market_cap" | "volume" | "price";
+                    sort?: "created_at" | "market_cap" | "price_change";
                     page?: number;
-                    limit?: number;
+                    per_page?: number;
                     /** @description Filter by graduation status */
                     graduated?: boolean;
                 };
@@ -536,6 +536,10 @@ export interface paths {
          * Get OHLCV candles
          * @description Returns candlestick data for charting. This is the recommended source
          *     of truth for price display. Use the last candle's `close` for current price.
+         *
+         *     Set `currency=usd` to get USD-denominated candles.
+         *
+         *     Use `from` and `to` for date range queries (ISO 8601 format).
          */
         get: {
             parameters: {
@@ -543,6 +547,18 @@ export interface paths {
                     mint: string;
                     interval?: "1m" | "5m" | "15m" | "1h" | "1d";
                     limit?: number;
+                    /** @description Currency for OHLCV values (sol or usd) */
+                    currency?: "sol" | "usd";
+                    /**
+                     * @description Start time (inclusive) - ISO 8601 timestamp
+                     * @example 2026-02-01T00:00:00Z
+                     */
+                    from?: string;
+                    /**
+                     * @description End time (inclusive) - ISO 8601 timestamp
+                     * @example 2026-02-07T00:00:00Z
+                     */
+                    to?: string;
                 };
                 header?: never;
                 path?: never;
@@ -559,16 +575,19 @@ export interface paths {
                         "application/json": {
                             mint?: string;
                             interval?: string;
-                            candles?: {
-                                /** @description Unix timestamp (seconds) */
-                                time?: number;
-                                open?: number;
-                                high?: number;
-                                low?: number;
-                                close?: number;
-                                /** @description Volume in SOL */
-                                volume?: number;
-                            }[];
+                            /** @enum {string} */
+                            currency?: "sol" | "usd";
+                            /**
+                             * Format: date-time
+                             * @description Requested start time (if provided)
+                             */
+                            from?: string;
+                            /**
+                             * Format: date-time
+                             * @description Requested end time (if provided)
+                             */
+                            to?: string;
+                            candles?: components["schemas"]["PriceCandle"][];
                         };
                     };
                 };
@@ -591,7 +610,7 @@ export interface paths {
         };
         /**
          * Get on-chain stats
-         * @description Returns bonding curve state directly from Solana.
+         * @description Returns bonding curve state directly from Solana with USD values.
          */
         get: {
             parameters: {
@@ -604,7 +623,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description On-chain stats */
+                /** @description On-chain stats with USD values */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -620,8 +639,16 @@ export interface paths {
                                 bondingCurveSol?: number;
                                 virtualSolReserves?: number;
                                 virtualTokenReserves?: number;
+                                /** @description Price in SOL */
                                 price?: number;
+                                /** @description Price in USD */
+                                priceUsd?: number;
+                                /** @description Market cap in SOL */
                                 marketCap?: number;
+                                /** @description Market cap in USD */
+                                marketCapUsd?: number;
+                                /** @description SOL price at time of request */
+                                solPriceUsd?: number;
                                 graduated?: boolean;
                             };
                         };
@@ -1267,7 +1294,13 @@ export interface paths {
         put?: never;
         /**
          * Upload image
-         * @description Upload an image for token creation.
+         * @description Upload an image for token creation or avatar updates.
+         *
+         *     **Token images** (`type=token`, default): No auth required. Stored as `{uuid}.{ext}` in the token-images bucket.
+         *
+         *     **Avatar images** (`type=avatar`): Auth required via wallet signature (`X-Wallet` + `X-Signature` headers) or agent API key (`Authorization: Bearer <apiKey>`). The `wallet` field is required. Stored as `{wallet}.{ext}` in the avatars bucket (upsert — replaces previous avatar).
+         *
+         *     Rate limited: 20 uploads per hour per IP.
          */
         post: {
             parameters: {
@@ -1283,7 +1316,15 @@ export interface paths {
                          * Format: binary
                          * @description Image file (PNG, JPEG, GIF, WebP, max 5MB)
                          */
-                        file?: string;
+                        file: string;
+                        /**
+                         * @description Upload type — token image or user/agent avatar
+                         * @default token
+                         * @enum {string}
+                         */
+                        type?: "token" | "avatar";
+                        /** @description Wallet address (required when type=avatar) */
+                        wallet?: string;
                     };
                 };
             };
@@ -1296,11 +1337,34 @@ export interface paths {
                     content: {
                         "application/json": {
                             success?: boolean;
-                            /** Format: uri */
+                            /**
+                             * Format: uri
+                             * @description Public URL of the uploaded image
+                             */
                             url?: string;
-                            filename?: string;
                         };
                     };
+                };
+                /** @description Invalid file type, file too large, or missing wallet for avatar upload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized — wallet signature or agent API key required (avatar uploads only) */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limit exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -1354,6 +1418,582 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/rpc": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * RPC proxy health check
+         * @description Returns status of the RPC proxy endpoint.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Proxy is running */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example ok */
+                            status?: string;
+                            /** @example RPC Proxy is running. Use POST for RPC requests. */
+                            message?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Solana RPC proxy
+         * @description Proxies Solana JSON-RPC requests to Helius with server-side API key.
+         *     Supports standard Solana RPC methods with rate limiting (100 req/min).
+         *
+         *     **Allowed Methods:** getBalance, getTokenBalance, getTokenAccountsByOwner,
+         *     getAccountInfo, getTokenAccountBalance, getLatestBlockhash, sendTransaction,
+         *     getTransaction, simulateTransaction, and more.
+         *
+         *     **Request Format:** Standard Solana JSON-RPC 2.0
+         *     **Response Format:** Standard Solana JSON-RPC 2.0
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SolanaRpcRequest"] | components["schemas"]["SolanaRpcRequest"][];
+                };
+            };
+            responses: {
+                /** @description RPC response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SolanaRpcResponse"] | components["schemas"]["SolanaRpcResponse"][];
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SolanaRpcError"];
+                    };
+                };
+                /** @description Rate limit exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SolanaRpcError"];
+                    };
+                };
+                /** @description Upstream RPC error */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SolanaRpcError"];
+                    };
+                };
+                /** @description Request timeout */
+                504: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SolanaRpcError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agent/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register an agent
+         * @description Register a new AI agent. Creates a User record (if needed) and an Agent record.
+         *     Returns an API key for authenticated requests and a claim code for Twitter verification.
+         *
+         *     **Twitter verification flow:**
+         *     1. Call this endpoint → receive `apiKey` + `claimCode`
+         *     2. Post a top-level tweet containing the claim code
+         *     3. Submit the tweet URL to `/agent/claim`
+         *
+         *     Rate limited: 10 requests per hour per IP.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Solana wallet address
+                         * @example 7b9191rMLP8yZaKYudWiFtFZwtaEYX5Tyy2hZeEKDyWq
+                         */
+                        wallet: string;
+                        /**
+                         * @description Agent display name (optional)
+                         * @example TradingBot9000
+                         */
+                        name?: string;
+                        /**
+                         * Format: uri
+                         * @description Avatar image URL (optional)
+                         */
+                        avatar?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Agent registered */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @description API key for authenticated requests (store securely, shown only once) */
+                            apiKey?: string;
+                            /** @description Short code to include in Twitter verification tweet */
+                            claimCode?: string;
+                            /** @description Pre-formatted tweet text with claim code */
+                            tweetTemplate?: string;
+                            userId?: string;
+                            agentId?: string;
+                        };
+                    };
+                };
+                /** @description Agent already registered for this wallet */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limit exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agent/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify agent via Twitter
+         * @description Submit a tweet URL containing the claim code to verify agent ownership.
+         *     The tweet must be a top-level tweet (not a reply) from the agent owner's account.
+         *
+         *     Rate limited: 10 requests per hour per IP.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description API key from /agent/register */
+                        apiKey: string;
+                        /**
+                         * Format: uri
+                         * @description URL to top-level tweet containing the claim code
+                         * @example https://x.com/MyAgent/status/1234567890
+                         */
+                        tweetUrl: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Agent verified */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            success?: boolean;
+                            /** @description Extracted Twitter handle */
+                            twitterHandle?: string | null;
+                            /** Format: date-time */
+                            verifiedAt?: string;
+                        };
+                    };
+                };
+                /** @description Invalid tweet URL or missing claim code */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Invalid API key */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Agent already verified */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limit exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Agents leaderboard
+         * @description Get paginated list of registered agents, sorted by volume, tokens created, or fees earned.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    sortBy?: "volume" | "tokens" | "fees";
+                    page?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Agents leaderboard */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            agents?: components["schemas"]["AgentEntry"][];
+                            total?: number;
+                            page?: number;
+                            per_page?: number;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Users leaderboard
+         * @description Get paginated list of users (excludes registered agents), sorted by volume, tokens created, or fees earned.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    sortBy?: "volume" | "tokens" | "fees";
+                    page?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Users leaderboard */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            users?: components["schemas"]["UserEntry"][];
+                            total?: number;
+                            page?: number;
+                            per_page?: number;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallet/balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get wallet token balances
+         * @description Fetches all SPL token balances for a wallet. Returns a map of mint addresses
+         *     to token balances. Only includes non-zero balances.
+         */
+        get: {
+            parameters: {
+                query: {
+                    /** @description Wallet address to fetch balances for */
+                    wallet: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Token balances */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            success?: boolean;
+                            /** @description Wallet address */
+                            wallet?: string;
+                            /**
+                             * @description Map of mint address to token balance
+                             * @example {
+                             *       "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v": 100.5,
+                             *       "So11111111111111111111111111111111111111112": 2.5
+                             *     }
+                             */
+                            balances?: {
+                                [key: string]: number;
+                            };
+                            /** @description Number of tokens with non-zero balance */
+                            count?: number;
+                        };
+                    };
+                };
+                /** @description Missing wallet parameter */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            success?: boolean;
+                            error?: string;
+                        };
+                    };
+                };
+                /** @description RPC error */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            success?: boolean;
+                            error?: string;
+                            message?: string;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/site-stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get site-wide stats
+         * @description Returns aggregate homepage stats: total tokens, graduated count, 24h volume,
+         *     agent count, user count, and page views. All stats fetched in parallel.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Site stats */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @description Total number of tokens created */
+                            totalTokens?: number;
+                            /** @description Number of tokens that graduated to Raydium */
+                            graduatedCount?: number;
+                            /** @description Number of registered agents */
+                            agentCount?: number;
+                            /** @description Number of users (excluding agents) */
+                            userCount?: number;
+                            /** @description Total homepage page views */
+                            pageViews?: number;
+                            /** @description Total 24h trading volume in SOL */
+                            totalVolume?: number;
+                        };
+                    };
+                };
+                /** @description Internal error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/track": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Track page view
+         * @description Lightweight page view counter. Atomically increments the page_views counter.
+         *     Best-effort — always returns success even if tracking fails.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Tracked */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ok?: boolean;
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1367,19 +2007,41 @@ export interface components {
             creator?: string;
             creator_name?: string;
             price_sol?: number;
+            /** @description Price in USD */
+            price_usd?: number;
             market_cap_sol?: number;
+            /** @description Market cap in USD */
+            market_cap_usd?: number;
             volume_24h?: number;
+            /** @description Number of trades in last 24 hours */
+            trades_24h?: number;
+            /** @description Number of unique holders */
+            holders?: number;
+            /** @description 24-hour price change percentage (computed from price_24h_ago) */
+            price_change_24h?: number | null;
+            /** @description All-time high price in USD */
+            ath?: number;
+            /** @description USD price 24 hours ago (for realtime % change calculation) */
+            price_24h_ago?: number;
             virtual_sol_reserves?: number;
             virtual_token_reserves?: number;
             real_sol_reserves?: number;
             real_token_reserves?: number;
             graduated?: boolean;
-            migrated_to_raydium?: boolean;
+            /** @description Raydium pool address (set after graduation) */
+            raydium_pool?: string;
             twitter?: string;
             telegram?: string;
             website?: string;
+            /**
+             * Format: date-time
+             * @description Timestamp of most recent trade
+             */
+            last_trade_at?: string;
             /** Format: date-time */
             created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
         };
         Trade: {
             id?: string;
@@ -1387,8 +2049,15 @@ export interface components {
             type?: "buy" | "sell";
             sol_amount?: number;
             token_amount?: number;
-            price?: number;
+            /** @description Price in SOL */
+            price_sol?: number;
+            /** @description Price in USD (calculated from sol_price_usd) */
+            price_usd?: number | null;
+            /** @description SOL price at time of trade */
+            sol_price_usd?: number | null;
             trader?: string;
+            /** @description Trader's username if profile exists */
+            username?: string | null;
             signature?: string;
             /** Format: date-time */
             created_at?: string;
@@ -1411,6 +2080,94 @@ export interface components {
             avatar?: string;
             /** Format: date-time */
             created_at?: string;
+        };
+        /**
+         * @description OHLCV candlestick data. All values (open, high, low, close, volume) are returned
+         *     in the requested currency (SOL or USD) based on the `currency` query parameter.
+         *     Use `currency=usd` for USD-denominated values, `currency=sol` for SOL-denominated values.
+         */
+        PriceCandle: {
+            /** @description Unix timestamp (seconds) */
+            time?: number;
+            /** @description Opening price in requested currency (SOL or USD) */
+            open?: number;
+            /** @description Highest price in requested currency (SOL or USD) */
+            high?: number;
+            /** @description Lowest price in requested currency (SOL or USD) */
+            low?: number;
+            /** @description Closing price in requested currency (SOL or USD) */
+            close?: number;
+            /** @description Volume in requested currency (SOL or USD) */
+            volume?: number;
+        };
+        AgentEntry: {
+            id?: string;
+            wallet?: string;
+            name?: string | null;
+            avatar?: string | null;
+            twitter_handle?: string | null;
+            twitter_verified?: boolean;
+            tokens_created?: number;
+            /** @description Total trading volume in USD */
+            total_volume?: number;
+            /** @description Total fees earned in USD */
+            total_fees?: number;
+            /** Format: date-time */
+            verified_at?: string | null;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        UserEntry: {
+            id?: string;
+            wallet?: string;
+            name?: string | null;
+            avatar?: string | null;
+            tokens_created?: number;
+            /** @description Total trading volume in USD */
+            total_volume?: number;
+            /** @description Total fees earned in USD */
+            total_fees?: number;
+            /** Format: date-time */
+            created_at?: string;
+        };
+        SolanaRpcRequest: {
+            /**
+             * @description JSON-RPC version
+             * @enum {string}
+             */
+            jsonrpc: "2.0";
+            /**
+             * @description RPC method name
+             * @example getBalance
+             */
+            method: string;
+            /** @description Method parameters */
+            params?: Record<string, never>[];
+            /**
+             * @description Request identifier
+             * @example 1
+             */
+            id: string | number;
+        };
+        SolanaRpcResponse: {
+            /** @enum {string} */
+            jsonrpc?: "2.0";
+            /** @description Method result */
+            result?: Record<string, never>;
+            error?: components["schemas"]["SolanaRpcErrorObject"];
+            id?: string | number;
+        };
+        SolanaRpcError: {
+            /** @enum {string} */
+            jsonrpc?: "2.0";
+            error?: components["schemas"]["SolanaRpcErrorObject"];
+            id?: ((string | null) | (number | null)) | null;
+        };
+        SolanaRpcErrorObject: {
+            /** @description Error code */
+            code?: number;
+            /** @description Error message */
+            message?: string;
         };
     };
     responses: never;
