@@ -6,7 +6,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import Table from 'cli-table3';
 import { createClient } from '@clawdvault/sdk';
-import { spinner, formatSol, formatTokens, shortenAddress, handleError } from '../utils';
+import { spinner, formatSol, formatTokens, formatPriceChange, shortenAddress, handleError } from '../utils';
 
 export const tokensCommand = new Command('tokens')
   .description('List tokens');
@@ -52,7 +52,7 @@ tokensCommand
           chalk.cyan('Name'),
           chalk.cyan('Price'),
           chalk.cyan('Market Cap'),
-          chalk.cyan('24h Vol'),
+          chalk.cyan('24h Change'),
           chalk.cyan('Status'),
           chalk.cyan('Mint'),
         ],
@@ -69,7 +69,7 @@ tokensCommand
           token.name ?? 'Unknown',
           formatSol(token.price_sol ?? 0),
           formatSol(token.market_cap_sol ?? 0),
-          token.volume_24h ? formatSol(token.volume_24h) : '-',
+          formatPriceChange(token.price_change_24h),
           status,
           shortenAddress(token.mint ?? ''),
         ]);
