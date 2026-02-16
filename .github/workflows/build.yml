@@ -46,3 +46,10 @@ jobs:
           exit 1
         fi
         echo "✅ Both packages built successfully"
+    - name: Discord Notification
+      if: failure()
+      uses: sarisia/actions-status-discord@v1
+      with:
+        webhook: ${{ secrets.DISCORD_CI_WEBHOOK }}
+        title: Build Failed — clawdvault-sdk
+        noprefix: true
